@@ -1,0 +1,13 @@
+[server]
+headless = true
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+
+[ui]
+# 关键：告诉浏览器允许显示成 Web App 模式
+isPwa = true
