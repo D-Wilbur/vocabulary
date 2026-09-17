@@ -71,3 +71,152 @@ The Terra configurations were the most lexically stable: `GPT-5.6 Terra + Low` a
 For production selection, **GPT-5 + Low is currently the strongest quality/cost compromise**. It preserves substantially more of the approved ground-truth criteria than Luna or Terra while cutting both latency and cost by more than half relative to the current GPT-5 + Medium baseline.
 
 If maximum semantic coverage is the only priority, **GPT-5 + High** provides the strongest result. If lower latency and cost are given greater weight, **GPT-5.6 Sol + High** is a viable alternative with somewhat lower semantic coverage.
+## 2. Interview Questions Generation
+
+This functionality generates six interview questions from the job information and a predefined set of interview criteria.
+
+To isolate the performance of the question-generation model, the job input and interview criteria will remain fixed across all configurations. The criteria will be generated once and frozen before the benchmark. Only the question-generation model and reasoning level will change.
+
+The production contract requires six concise interview questions and no additional explanatory text.
+
+### Evaluation Metrics
+
+The benchmark will evaluate:
+
+- **API Success Rate**
+- **Question Count Compliance:** whether exactly six non-empty questions are returned
+- **Duplicate Question Rate:** whether multiple generated questions test substantially the same thing
+- **Criteria Coverage:** percentage of the frozen interview criteria addressed by at least one generated question
+- **Job Requirement Coverage:** whether the generated question set covers the major requirements of the target role
+- **Question Relevance:** whether each question is relevant to the job and the corresponding criteria
+- **Question Specificity:** whether questions are sufficiently concrete to obtain meaningful evidence from the candidate
+- **Unsupported Assumption Rate:** whether a question incorrectly assumes candidate experience or facts that were not provided
+- **Question Diversity:** whether the six questions examine sufficiently different dimensions rather than repeatedly asking similar questions
+- **Average / P95 Latency**
+- **Reasoning Tokens**
+- **Estimated Cost**
+
+### Implementation
+
+A fixed job and fixed human-reviewed interview-criteria set will be used.
+
+A high-capability model will produce a reference evaluation rubric rather than a single mandatory set of six questions. This rubric will define the expected areas that a good question set should cover.
+
+Each candidate model will generate six questions repeatedly using exactly the same input.
+
+A fixed high-capability judge will compare the generated question set against the approved rubric and evaluate criteria coverage, job relevance, specificity, duplication, and unsupported assumptions.
+
+The final model recommendation will prioritize question quality and coverage first, followed by consistency, latency, and cost.
+
+
+## 3. Resume-Based Interview Question Generation
+
+This functionality generates approximately 2–3 candidate-specific interview questions based on both the job information and the candidate's resume.
+
+Unlike general interview questions, the main purpose of this functionality is to identify valuable areas that require deeper investigation during the interview.
+
+### Evaluation Metrics
+
+- **API Success Rate**
+- **2–3 Question Count Compliance**
+- **Resume Grounding:** whether each question is supported by information contained in the resume
+- **Job Relevance:** whether each question helps assess qualifications relevant to the target job
+- **Gap Targeting:** whether questions investigate meaningful gaps, ambiguities, or important evidence in the resume
+- **Unsupported Assumption Rate:** whether the question assumes experience or facts that are not present in the resume
+- **Duplicate Question Rate**
+- **Question Specificity**
+- **Average / P95 Latency**
+- **Reasoning Tokens**
+- **Estimated Cost**
+
+### Implementation
+
+A fixed job and synthetic resume with explicitly known facts will be used.
+
+A human-reviewed reference rubric will identify the most important resume areas that should be investigated during the interview.
+
+Candidate models will generate 2–3 questions using identical job and resume inputs.
+
+The generated questions will be evaluated against the approved reference areas, while unsupported assumptions will be detected separately.
+
+
+## 4. Interview Evaluation
+
+This functionality evaluates the candidate's actual interview responses using the job information and interview criteria.
+
+The evaluator receives the job title, company information, job description, evaluation criteria, interview questions, follow-up questions, and candidate responses.
+
+Because interview scoring is subjective, a fixed synthetic interview conversation will be created with deliberately strong, average, weak, irrelevant, and incomplete answers.
+
+### Evaluation Metrics
+
+- **API Success Rate**
+- **Parse / Schema Success**
+- **Ground-Truth Score Agreement**
+- **Overall Score Error**
+- **Per-Criterion Score Error**
+- **Score Standard Deviation**
+- **Score Range**
+- **Evidence Grounding:** whether evaluation statements can be traced to actual candidate responses
+- **Unsupported Evaluation Rate**
+- **Cross-Run Evaluation Consistency**
+- **Average / P95 Latency**
+- **Reasoning Tokens**
+- **Estimated Cost**
+
+### Implementation
+
+A high-capability model will first evaluate the fixed interview conversation.
+
+The generated evaluation will then be manually reviewed and corrected where necessary. The human-approved evaluation will be frozen as the benchmark ground truth.
+
+Every candidate model will receive the identical interview conversation and identical evaluation criteria.
+
+Scores will be compared against the approved reference, while repeated runs will measure scoring stability.
+
+This allows both accuracy relative to the approved evaluation and consistency across repeated executions to be measured.
+
+
+## 5. Real-Time Interview Conversation
+
+This functionality controls the live AI interviewer during the interview.
+
+The model must interpret each candidate response, select the correct conversation state, generate an appropriate interviewer response, ask follow-up questions when necessary, return to the original interview sequence, handle candidate questions, redirect off-topic conversation, and correctly complete the interview.
+
+### Evaluation Metrics
+
+- **API / JSON / Schema Success**
+- **Intent Classification Accuracy**
+- **Conversation State Accuracy**
+- **Question Order Compliance**
+- **Follow-Up Decision Accuracy**
+- **Return-to-Main-Question Compliance**
+- **Candidate Question Handling Accuracy**
+- **Off-Topic Recovery Accuracy**
+- **Premature Interview Ending Rate**
+- **All Questions Asked Rate**
+- **Response Relevance**
+- **Response Conciseness**
+- **Per-Turn Average / P95 Latency**
+- **Total Estimated Interview Cost**
+
+### Implementation
+
+A deterministic scripted candidate conversation will be created containing different interaction types, including:
+
+1. Candidate introduction
+2. Complete answer
+3. Incomplete answer requiring follow-up
+4. Irrelevant/off-topic response
+5. Candidate asking the interviewer a question
+6. Return from a follow-up to the original interview sequence
+7. Completion of all required interview questions
+8. Final Q&A and interview termination
+
+For each scripted turn, the correct intent and expected conversation state will be manually defined in advance.
+
+Every model configuration will run through the same conversation.
+
+This creates deterministic ground truth for state-transition correctness while separately evaluating the quality of the generated interviewer text.
+
+Model selection will prioritize correct conversation control and interview completion before latency and cost.
